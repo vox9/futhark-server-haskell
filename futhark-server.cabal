@@ -1,6 +1,6 @@
 cabal-version:      2.4
 name:               futhark-server
-version:            1.2.3.0
+version:            1.2.4.0
 synopsis: Client implementation of the Futhark server protocol.
 
 description: Provides an easy way to interact with a running Futhark
@@ -22,6 +22,7 @@ source-repository head
 
 library
     exposed-modules:  Futhark.Server
+                      Futhark.Server.Parsed
                       Futhark.Server.Values
     build-depends:    base >=4 && < 5
                     , binary

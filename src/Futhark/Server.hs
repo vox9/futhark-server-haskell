@@ -36,6 +36,7 @@ module Futhark.Server
     -- ** Main commands
     cmdRestore,
     cmdStore,
+    cmdStore_,
     cmdCall,
     cmdFree,
     cmdRename,
@@ -46,11 +47,17 @@ module Futhark.Server
     -- ** Interrogation
     cmdTypes,
     cmdEntryPoints,
+    cmdKind,
 
     -- ** Records
     cmdNew,
     cmdProject,
     cmdFields,
+
+    -- ** Sums
+    cmdVariants,
+    cmdVariant,
+    cmdConstruct,
 
     -- ** Auxiliary
     cmdReport,
@@ -337,6 +344,10 @@ cmdRestore s fname vars = helpCmd s "restore" $ T.pack fname : concatMap f vars
 cmdStore :: Server -> FilePath -> [VarName] -> IO (Maybe CmdFailure)
 cmdStore s fname vars = helpCmd s "store" $ T.pack fname : vars
 
+-- | @store_ filename vars...@.
+cmdStore_ :: Server -> FilePath -> [VarName] -> IO (Maybe CmdFailure)
+cmdStore_ s fname vars = helpCmd s "store_" $ T.pack fname : vars
+
 -- | @call entrypoint outs... ins...@.
 cmdCall :: Server -> EntryName -> [VarName] -> [VarName] -> IO (Either CmdFailure [Text])
 cmdCall s entry outs ins =
@@ -396,8 +407,12 @@ cmdTypes s = sendCommand s "types" []
 cmdEntryPoints :: Server -> IO (Either CmdFailure [Text])
 cmdEntryPoints s = sendCommand s "entry_points" []
 
+-- | @kind type@
+cmdKind :: Server -> TypeName -> IO (Either CmdFailure Text)
+cmdKind s t = fmap head <$> sendCommand s "kind" [t]
+
 -- | @fields type@
-cmdFields :: Server -> Text -> IO (Either CmdFailure [Text])
+cmdFields :: Server -> TypeName -> IO (Either CmdFailure [Text])
 cmdFields s t = sendCommand s "fields" [t]
 
 -- | @new var0 type var1...@
@@ -407,6 +422,18 @@ cmdNew s var0 t vars = helpCmd s "new" $ var0 : t : vars
 -- | @project to from field@
 cmdProject :: Server -> Text -> Text -> Text -> IO (Maybe CmdFailure)
 cmdProject s to from field = helpCmd s "project" [to, from, field]
+
+-- | @variants type@
+cmdVariants :: Server -> TypeName -> IO (Either CmdFailure [Text])
+cmdVariants s t = sendCommand s "variants" [t]
+
+-- | @variant var@
+cmdVariant :: Server -> Text -> IO (Either CmdFailure Text)
+cmdVariant s var = fmap head <$> sendCommand s "variant" [var]
+
+-- | @new var0 type variant var1...@
+cmdConstruct :: Server -> Text -> Text -> Text -> [Text] -> IO (Maybe CmdFailure)
+cmdConstruct s var0 t v vars = helpCmd s "construt" $ var0 : t : v : vars
 
 -- | Turn a 'Maybe'-producing command into a monadic action.
 cmdMaybe :: (MonadError Text m, MonadIO m) => IO (Maybe CmdFailure) -> m ()
